@@ -334,6 +334,8 @@ class PacmanRules:
         return Actions.getPossibleActions( state.getPacmanState().configuration, state.data.layout.walls )
     getLegalActions = staticmethod( getLegalActions )
 
+    
+
     def applyAction( state, action ):
         """
         Edits the state to reflect the results of the action.

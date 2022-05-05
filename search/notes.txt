@@ -1,0 +1,36 @@
+# get previous actions
+legal = state.getLegalPacmanActions()
+successors = [(state.generatePacmanSuccessor(action), action, depth) for action in legal]
+
+Note:
+1. Genetic agent from github codes work
+2. try adding genetic agent to pacmanAgent.py file in codes
+3. run using terminal
+4. try using a different search method
+
+
+'''def single_point_crossover(parent_1, parent_2):
+    parent_1 = copy.deepcopy(parent_1)
+    parent_2 = copy.deepcopy(parent_2)
+    
+    # print('\n\nlength: ', len(parent_1), len(parent_2))
+    
+    while True:
+        xx = random.randrange(19)
+        if xx != 0:
+            break
+    
+    # print('coordinate: ', xx)
+    
+    # print('part 1: ', len(parent_1[:xx][:]))
+    # print('part 2: ', len(parent_2[xx-1:][:]))
+
+    child_1 = np.concatenate([parent_1[:xx][:], parent_2[xx-1:][:]])
+    # print('child length: ', len(child_1))
+    # child_2 = np.append(parent_2[:xx][:yy], parent_1[xx:][yy:])
+    return child_1
+
+def multi_point_crossover(parent_1, parent_2, crossover_points):
+    for _ in crossover_points:
+        child = single_point_crossover(parent_1, parent_2)
+    return child'''
