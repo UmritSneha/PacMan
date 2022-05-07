@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 from datetime import datetime
+import pandas as pd
 from pacman import *
 import ghostAgents
 import layout
@@ -11,13 +12,20 @@ from pprint import pprint
 import sys
 
 ## set up the parameters to newGame
-gridx = 25
-gridy = 20
-numtraining = 0
+gridx = 19 
+gridy = 8 
+# numtraining = 0
 timeout = 30
 
+# minimaxClassic: 8 4
+# contestClassic: 19 8
+# mediumClassic: 19 10
+# originalClassic: 27 26
+# smallClassic: 19 6
+
 # set layout of game
-layout=layout.getLayout("mediumClassic")
+chosen_layout = "contestClassic"
+layout=layout.getLayout(chosen_layout)
 # set game Agent
 pacmanType = loadAgent("pacmanAgent", True)
 # set number of agents
@@ -69,7 +77,7 @@ def crossover(parent1, parent2):
     return child
 
 # run search algorithm
-def run_genetic(popSiz=20, timescale=20, numberOfRuns=40, tournamentSize=7):
+def run_genetic(popSiz=20, timescale=20, numberOfRuns=5, tournamentSize=7):
     # create random initial population
     population = []
     for _ in range(popSiz):
@@ -90,7 +98,7 @@ def run_genetic(popSiz=20, timescale=20, numberOfRuns=40, tournamentSize=7):
             if tt < timescale - 1:
                 fitness.append(run(pp,numberOfRuns, True))
             else: 
-                fitness.append(run(pp,numberOfRuns, False))
+                fitness.append(run(pp,numberOfRuns, True))
         
         print("\n******")
         print(fitness)
@@ -138,7 +146,12 @@ def run_genetic(popSiz=20, timescale=20, numberOfRuns=40, tournamentSize=7):
     plt.legend()
     plt.show()
 
-def run_memetic(popSize=20, timescale=20, numberOfRuns=15, tournamentSize=7):
+    # save results in csv file
+    genetic_data = {'layout':chosen_layout, 'averages':averages, 'bests':bests}
+    genetic_df = pd.DataFrame(genetic_data)
+    genetic_df.to_csv('genetic_results.csv', mode='a', header=False, index=False)
+
+def run_memetic(popSize=20, timescale=20, numberOfRuns=10, tournamentSize=7):
    # create random initial population
     population = []
     for _ in range(popSize):
@@ -235,11 +248,16 @@ def run_memetic(popSize=20, timescale=20, numberOfRuns=15, tournamentSize=7):
     plt.legend()
     plt.show()
 
+    # save results in csv file
+    memetic_data = {'layout':chosen_layout, 'averages':averages, 'bests':bests}
+    memetic_df = pd.DataFrame(memetic_data)
+    memetic_df.to_csv('memetic_results.csv', mode='a', header=False, index=False)
+
 # test experiment
 def runTest():
-    program = np.empty((25,20),dtype=object)
-    for xx in range(25):
-        for yy in range(20):
+    program = np.empty((gridx,gridy),dtype=object)
+    for xx in range(gridx):
+        for yy in range(gridy):
             # goes to the right hand side of the screen
             # eventually gets stuck
             program[xx][yy] = Directions.EAST
@@ -249,8 +267,8 @@ def runTest():
 
 
 if __name__ == '__main__':
-    # runTest()   
-    # run_genetic()
     start = datetime.now()
-    run_memetic()
+    # run_genetic()
+    # run_memetic()
+    runTest() 
     print('Runtime: ', datetime.now() - start)

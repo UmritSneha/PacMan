@@ -5,6 +5,7 @@ import random
 import numpy as np
 import math
 from pacmanAgents import run
+from searchAgents import euclideanHeuristic
 
 class pacmanAgent(Agent):
     '''def __init__(self, evalFn="scoreEvaluation"):
@@ -41,6 +42,34 @@ class pacmanAgent(Agent):
             ghostPos = "right"
 
         return ghostDist, ghostPos
+
+    def euclideanDistance(self, x1, y1, x2, y2):
+        return ((x1 - x2)**2 + (y1-y2)**2)**0.5
+        
+    def getFoodAction(self, state, px, py):
+        # print(state.getFood())
+        # print(state.hasFood(px, py))
+        
+        # check food status of pacman
+        food_matrix = state.getFood()
+        # print(food_matrix)
+        # print('\n')
+        for xx in range(19):
+            for yy in range(8):
+                # print(food_matrix[xx][yy])
+                if food_matrix[xx][yy] == True:
+                    # calcuate distance
+                    food_dist = self.euclideanDistance(xx,yy,px,py)
+                    return food_dist, xx, yy
+
+    def getCapsuleDistance(self, state, px, py):
+        # list of positions (x, y) of remaining capsules
+        
+        capsule_list =  state.getCapsules()
+        if capsule_list:
+            for each in capsule_list:
+                distance = ((each[0] - px)**2 + (each[1]-py)**2)**0.5
+                return distance, each[0], each[1]
     
     def getAction(self,state):
         # get pacman position
@@ -49,7 +78,22 @@ class pacmanAgent(Agent):
 
         # get all legal actions of pacman
         legal = state.getLegalPacmanActions()
-        
+
+        # food actions
+        food_dist, fx, fy = self.getFoodAction(state, px, py)
+        if food_dist < 2.0:
+            px = fx
+            py = fy
+        # print('x: ', x)
+        # print('y: ', y)
+
+
+        # capsule actions
+        capsule_dist, cx, cy = self.getCapsuleDistance(state, px, py)
+        if capsule_dist < 5.0:
+            px = cx
+            py = cy
+
         # get first ghost position and distance
         ghost1_dist, ghost1_pos = self.getGhostDetails(state, 1, px, py)
 
@@ -75,14 +119,6 @@ class pacmanAgent(Agent):
             # return random action from the list of best actions
             pacman_direction = random.choice(best_actions)
 
-        # list of positions (x, y) of remaining capsules
-        # print('Get capsules: ', state.getCapsules())
-        # print('Get Food: ', state.getFood())
-        # print(state.hasFood(px, py))
-
-        # check food status of pacman
-        # food_status = state.hasFood(px, py)
-        # print('food_status: ', food_status)
  
         # generate random action if not legal
         if pacman_direction not in legal:
@@ -112,4 +148,6 @@ print(north, east, south, west)'''
     if ghost1Pos == 'down':
         direction = Directions.SOUTH
     if ghost1Pos == 'right':
-        direction = Directions.WEST'''
+        direction = Directions.WEST
+        
+'''
