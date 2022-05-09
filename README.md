@@ -13,6 +13,8 @@ Pac-Man is a popular real-time arcade game that provides a significantly rich an
 
 [`plotResults.ipynb`](plotResults.ipynb) Visualising and comparing experimental results 
 
+
+
 **Files from UC Berkeley**
 
 [`pacman.py`](pacman.py) Describes pacman GameState type.
@@ -48,6 +50,6 @@ python run.py
 ![Alt Text](https://github.com/UmritSneha/PacMan/blob/main/plots/medium_classic_ma_snippet.gif)
 
 
-#### Environment Used
+### Environment Used
 The Pac-Man simulation environment is modified and adapted from [Berkeley AI Pacman Search](https://github.com/jspacco/pac3man).
 
