@@ -117,7 +117,7 @@ def run_genetic(popSiz=20, timescale=40, numberOfRuns=3, tournamentSize=5):
             if tt < timescale - 1:
                 fitness.append(run(pp,numberOfRuns, True))
             else: 
-                fitness.append(run(pp,numberOfRuns, True))
+                fitness.append(run(pp,numberOfRuns, False))
         
         print("\n******")
         print(fitness)

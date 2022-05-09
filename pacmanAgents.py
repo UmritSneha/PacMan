@@ -1,4 +1,3 @@
-from os import stat
 from game import Agent
 import random
 import numpy as np
@@ -6,9 +5,6 @@ import math
 
 
 class pacmanAgent(Agent):
-    '''def __init__(self, evalFn="scoreEvaluation"):
-        self.evaluationFunction = util.lookup(evalFn, globals())
-        assert self.evaluationFunction != None'''
         
     def setCode(self,codep, gridx, gridy):
         self.code = codep
@@ -75,10 +71,9 @@ class pacmanAgent(Agent):
         # food actions
         food_dist, fx, fy = self.getFoodAction(state, px, py)
         food_count = state.getNumFood()
-        if food_count > 0:
-            if food_dist < 1.0:
-                px = fx
-                py = fy
+        if food_count > 0 and food_dist < 2.0:
+            px = fx
+            py = fy
         # print('x: ', x)
         # print('y: ', y)
 
@@ -136,25 +131,3 @@ class pacmanAgent(Agent):
 def scoreEvaluation(state):
     return state.getScore()
 
-'''if direction == 'North':
-    north+=1
-if direction == 'East':
-    east+=1
-if direction == 'South':
-    south+=1
-if direction == 'West':
-    west+=1
-print(north, east, south, west)'''
-
-# set action when close to ghost
-'''if ghost1Dist < 4:
-    if ghost1Pos == 'up':
-        direction = Directions.NORTH
-    if ghost1Pos == 'left':
-        direction = Directions.EAST
-    if ghost1Pos == 'down':
-        direction = Directions.SOUTH
-    if ghost1Pos == 'right':
-        direction = Directions.WEST
-        
-'''
