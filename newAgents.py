@@ -12,8 +12,10 @@ class pacmanAgent(Agent):
         self.evaluationFunction = util.lookup(evalFn, globals())
         assert self.evaluationFunction != None'''
         
-    def setCode(self,codep):
+    def setCode(self,codep, gridx, gridy):
         self.code = codep
+        self.gridx = gridx
+        self.gridy = gridy
         # print('self code: ', self.code)
 
     def getGhostDetails(self, state, ghost_num, px, py):
@@ -47,30 +49,23 @@ class pacmanAgent(Agent):
         return ((x1 - x2)**2 + (y1-y2)**2)**0.5
         
     def getFoodAction(self, state, px, py):
-        # print(state.getFood())
-        # print(state.hasFood(px, py))
-        
         # check food status of pacman
         food_matrix = state.getFood()
-        # print(food_matrix)
-        # print('\n')
-        for xx in range(19):
-            for yy in range(8):
-                # print(food_matrix[xx][yy])
+        for xx in range(self.gridx):
+            for yy in range(self.gridy):
                 if food_matrix[xx][yy] == True:
-                    # calcuate distance
+                    # calcuate euclidean distance
                     food_dist = self.euclideanDistance(xx,yy,px,py)
                     return food_dist, xx, yy
 
-    def getCapsuleDistance(self, state, px, py):
-        # list of positions (x, y) of remaining capsules
-        
-        capsule_list =  state.getCapsules()
-        if capsule_list:
-            for each in capsule_list:
-                distance = ((each[0] - px)**2 + (each[1]-py)**2)**0.5
-                return distance, each[0], each[1]
-    
+    def getCapsuleDistance(self, state, px, py, capsule_list):
+        # list of positions (x, y) of remaining capsule
+        for each in capsule_list:
+            distance = self.euclideanDistance(each[0], each[1], px, py)
+            # print(distance)
+            # distance = ((each[0] - px)**2 + (each[1]-py)**2)**0.5
+            return distance, each[0], each[1]
+
     def getAction(self,state):
         # get pacman position
         px,py = state.getPacmanPosition()
@@ -81,18 +76,22 @@ class pacmanAgent(Agent):
 
         # food actions
         food_dist, fx, fy = self.getFoodAction(state, px, py)
-        if food_dist < 2.0:
-            px = fx
-            py = fy
+        food_count = state.getNumFood()
+        if food_count > 0:
+            if food_dist < 2.0:
+                px = fx
+                py = fy
         # print('x: ', x)
         # print('y: ', y)
 
 
         # capsule actions
-        capsule_dist, cx, cy = self.getCapsuleDistance(state, px, py)
-        if capsule_dist < 5.0:
-            px = cx
-            py = cy
+        '''capsule_list =  state.getCapsules()
+        if capsule_list:
+            capsule_dist, cx, cy = self.getCapsuleDistance(state, px, py, capsule_list)
+            if capsule_dist < 5.0:
+                px = cx
+                py = cy'''
 
         # get first ghost position and distance
         ghost1_dist, ghost1_pos = self.getGhostDetails(state, 1, px, py)
@@ -103,21 +102,31 @@ class pacmanAgent(Agent):
         # check when pacman is close to ghost
         # adopt a greedy search approach
         if ghost1_dist < 4 or ghost2_dist < 4:
-            # get successor state for all legal actions
-            successors = [(state.generateSuccessor(0, action), action) for action in legal]
 
-            # evaluate successor states
-            scores = [(scoreEvaluation(state), action) for state, action in successors]
-            
-            # get maximum score
-            max_score = max(scores)[0]
+            # check capsule status
+            # capsule actions
+            capsule_list =  state.getCapsules()
+            if capsule_list:
+                capsule_dist, cx, cy = self.getCapsuleDistance(state, px, py, capsule_list)
+                if capsule_dist < 5.0:
+                    px = cx
+                    py = cy
+            else:
+                # get successor state for all legal actions
+                successors = [(state.generateSuccessor(0, action), action) for action in legal]
 
-            # get actions that produce maximum score
-            best_actions = [pair[1] for pair in scores if pair[0] == max_score]
-            # print('Best Actions: ', best_actions)
+                # evaluate successor states
+                scores = [(scoreEvaluation(state), action) for state, action in successors]
+                
+                # get maximum score
+                max_score = max(scores)[0]
 
-            # return random action from the list of best actions
-            pacman_direction = random.choice(best_actions)
+                # get actions that produce maximum score
+                best_actions = [pair[1] for pair in scores if pair[0] == max_score]
+                # print('Best Actions: ', best_actions)
+
+                # return random action from the list of best actions
+                pacman_direction = random.choice(best_actions)
 
  
         # generate random action if not legal

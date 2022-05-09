@@ -12,19 +12,38 @@ from pprint import pprint
 import sys
 
 ## set up the parameters to newGame
-gridx = 19 
-gridy = 8 
-# numtraining = 0
-timeout = 30
+timeout = 50
+
+# set layout of game
+chosen_layout = "originalClassic"
 
 # minimaxClassic: 8 4
 # contestClassic: 19 8
+# capsuleClassic: 18 6
 # mediumClassic: 19 10
 # originalClassic: 27 26
 # smallClassic: 19 6
 
-# set layout of game
-chosen_layout = "contestClassic"
+# grid dimension
+if chosen_layout == "minimaxClassic":
+    gridx = 8
+    gridy = 4
+if chosen_layout == "contestClassic":
+    gridx = 19
+    gridy = 8
+if chosen_layout == "mediumClassic":
+    gridx = 19
+    gridy = 10
+if chosen_layout == "originalClassic":
+    gridx = 27
+    gridy = 26
+if chosen_layout == "smallClassic":
+    gridx = 19
+    gridy = 6
+if chosen_layout == "capsuleClassic":
+    gridx = 18
+    gridy = 6
+
 layout=layout.getLayout(chosen_layout)
 # set game Agent
 pacmanType = loadAgent("pacmanAgent", True)
@@ -42,13 +61,13 @@ def run(code,noOfRuns, beQuiet):
         gameDisplay = textDisplay.NullGraphics()
         rules.quiet = True
     else:
-        timeInterval = 0.001
+        timeInterval = 0.0001
         textDisplay.SLEEP_TIME = timeInterval
         gameDisplay = graphicsDisplay.PacmanGraphics(1.0, timeInterval)
         rules.quiet = False
-    for gg in range(noOfRuns):
+    for _ in range(noOfRuns):
         thePacman = pacmanType()
-        thePacman.setCode(code)
+        thePacman.setCode(code, gridx, gridy)
         
         game = rules.newGame( layout, thePacman, ghosts, gameDisplay, \
                           beQuiet, catchExceptions )
@@ -77,7 +96,7 @@ def crossover(parent1, parent2):
     return child
 
 # run search algorithm
-def run_genetic(popSiz=20, timescale=20, numberOfRuns=5, tournamentSize=7):
+def run_genetic(popSiz=20, timescale=40, numberOfRuns=2, tournamentSize=5):
     # create random initial population
     population = []
     for _ in range(popSiz):
@@ -149,9 +168,9 @@ def run_genetic(popSiz=20, timescale=20, numberOfRuns=5, tournamentSize=7):
     # save results in csv file
     genetic_data = {'layout':chosen_layout, 'averages':averages, 'bests':bests}
     genetic_df = pd.DataFrame(genetic_data)
-    genetic_df.to_csv('genetic_results.csv', mode='a', header=False, index=False)
+    genetic_df.to_csv('genetic_results2.csv', mode='a', header=False, index=False)
 
-def run_memetic(popSize=20, timescale=20, numberOfRuns=10, tournamentSize=7):
+def run_memetic(popSize=20, timescale=40, numberOfRuns=1, tournamentSize=3):
    # create random initial population
     population = []
     for _ in range(popSize):
@@ -211,7 +230,7 @@ def run_memetic(popSize=20, timescale=20, numberOfRuns=10, tournamentSize=7):
                     # apply mutation to produce a variant 
                     mutant_child = mutate(child) 
                     mutant_list.append(mutant_child)
-                    # evaluate variant
+                    # evaluate initial state
                     mutant_score = run(mutant_child, numberOfRuns, True) # evaluate possible solution
                     score_list.append(mutant_score)
                    
@@ -220,8 +239,9 @@ def run_memetic(popSize=20, timescale=20, numberOfRuns=10, tournamentSize=7):
                         # add to new population
                         newPopulation.append(mutant_child)
                         stop=True
-                    elif loop_index == 10:
+                    elif loop_index == 5:
                         # termination criteria
+                        # get child producing better performance
                         max_index = score_list.index(max(score_list))
                         chosen_child = mutant_list[max_index]
                         newPopulation.append(chosen_child)
@@ -251,7 +271,7 @@ def run_memetic(popSize=20, timescale=20, numberOfRuns=10, tournamentSize=7):
     # save results in csv file
     memetic_data = {'layout':chosen_layout, 'averages':averages, 'bests':bests}
     memetic_df = pd.DataFrame(memetic_data)
-    memetic_df.to_csv('memetic_results.csv', mode='a', header=False, index=False)
+    memetic_df.to_csv('memetic_results2.csv', mode='a', header=False, index=False)
 
 # test experiment
 def runTest():
@@ -260,7 +280,7 @@ def runTest():
         for yy in range(gridy):
             # goes to the right hand side of the screen
             # eventually gets stuck
-            program[xx][yy] = Directions.EAST
+            program[xx][yy] = Directions.STOP
     # run chooses a direction based on agrid
     # print(program)
     run(program,1,beQuiet=False)
@@ -269,6 +289,6 @@ def runTest():
 if __name__ == '__main__':
     start = datetime.now()
     # run_genetic()
-    # run_memetic()
-    runTest() 
+    run_memetic()
+    # runTest() 
     print('Runtime: ', datetime.now() - start)
