@@ -53,3 +53,6 @@ python run.py
 ### Environment Used
 The Pac-Man simulation environment is modified and adapted from [Berkeley AI Pacman Search](https://github.com/jspacco/pac3man).
 
+### GitHub Link
+[https://github.com/UmritSneha/PacMan](https://github.com/UmritSneha/PacMan)
+
