@@ -1,201 +1,160 @@
-# pacmanAgents.py
-# ---------------
-# Licensing Information:  You are free to use or extend these projects for
-# educational purposes provided that (1) you do not distribute or publish
-# solutions, (2) you retain this notice, and (3) you provide clear
-# attribution to UC Berkeley, including a link to http://ai.berkeley.edu.
-# 
-# Attribution Information: The Pacman AI projects were developed at UC Berkeley.
-# The core projects and autograders were primarily created by John DeNero
-# (denero@cs.berkeley.edu) and Dan Klein (klein@cs.berkeley.edu).
-# Student side autograding was added by Brad Miller, Nick Hay, and
-# Pieter Abbeel (pabbeel@cs.berkeley.edu).
-
-from socket import timeout
-from pacman import *
+from os import stat
 from game import Agent
-import textDisplay, graphicsDisplay
 import random
-import game, ghostAgents
-import matplotlib.pyplot as plt
-import util, copy
 import numpy as np
+import math
 
 
-
-class LeftTurnAgent(game.Agent):
-    "An agent that turns left at every opportunity"
-
-    def getAction(self, state):
-        legal = state.getLegalPacmanActions()
-        current = state.getPacmanState().configuration.direction
-        if current == Directions.STOP: current = Directions.NORTH
-        left = Directions.LEFT[current]
-        if left in legal: return left
-        if current in legal: return current
-        if Directions.RIGHT[current] in legal: return Directions.RIGHT[current]
-        if Directions.LEFT[left] in legal: return Directions.LEFT[left]
-        return Directions.STOP
-
-class GreedyAgent(Agent):
-    "An agent that tries to maximise score at every opportunity"
-    def __init__(self, evalFn="scoreEvaluation"):
+class pacmanAgent(Agent):
+    '''def __init__(self, evalFn="scoreEvaluation"):
         self.evaluationFunction = util.lookup(evalFn, globals())
-        assert self.evaluationFunction != None
-
-    def getAction(self, state):
-        # Generate candidate actions
-        legal = state.getLegalPacmanActions()
-        if Directions.STOP in legal: legal.remove(Directions.STOP)
-
-        successors = [(state.generateSuccessor(0, action), action) for action in legal]
-        scored = [(self.evaluationFunction(state), action) for state, action in successors]
-        bestScore = max(scored)[0]
-        bestActions = [pair[1] for pair in scored if pair[0] == bestScore]
-        return random.choice(bestActions)
-
-class GeneticAgent(Agent):
-    def setCode(self, codep):
-        self.code = codep
-
-    # mutation
-    def mutate(self, parentp,numberOfMutations=10):
-        parent = copy.deepcopy(parentp)
-        for _ in range(numberOfMutations):
-            xx = random.randrange(gridx)
-            yy = random.randrange(gridy)
-            parent[xx][yy] = random.choice(options)
-        return parent
-
-    def crossover(self, parent1, parent2):
-        child = copy.deepcopy(parent1)
-        for xx in range(gridx):
-            for yy in range(gridy):
-                child[xx][yy] = random.choice([parent1[xx][yy], parent2[xx][yy]])
-        return child
-
-    def run_ga(self):
-        pop_size = 20
-        timescale = 20
-        num_of_runs = 2
-        tournament_size = 7
-        games = []
-        # creating random intial population
-        population = []
-        for _ in range(pop_size):
-            program = np.empty((gridx,gridy),dtype=object)
-            for xx in range(gridx):
-                for yy in range(gridy):
-                    program[xx][yy] = random.choice(options)
-            population.append(program)
-
-        print("Beginning Evolution")
-        averages = []
-        bests = []
-        for tt in range(timescale):
-            # evaluate population
-            fitness = []
-            for pp in population:
-                print(".",end="",flush=True)
-                if tt < timescale - 1:
-                    fitness.append(run(pp,num_of_runs, True))
-                else: 
-                    fitness.append(run(pp,num_of_runs, False))
-
-            print("\n******")
-            print(fitness)
-            averages.append(1000+sum(fitness)/pop_size)
-            print("av ",1000+sum(fitness)/pop_size)
-            bests.append(1000+max(fitness))
-            print("max ",1000+max(fitness))
-
-            pop_fit_pairs = list(zip(population,fitness))
-            newPopulation = []
-            for _ in range(pop_size-1):
-                # crossover the parents
-                # selecting first parent
-                tournament1 = random.sample(pop_fit_pairs, tournament_size)
-                parent1 = max(tournament1,key=lambda x:x[1])[0]
-
-                # selecting second parent
-                tournament2 = random.sample(pop_fit_pairs, tournament_size)
-                parent2 = max(tournament2,key=lambda x:x[1])[0]
-
-                # apply crossover to generate child
-                child = self.crossover(parent1, parent2)
-
-                # mutate child
-                mutant_child = self.mutate(child)
-
-                # add to new population
-                newPopulation.append(mutant_child)
-
-            # Keeping the best population member
-            best_member = [list(pop) for pop,fit in pop_fit_pairs if fit == max(fitness)]
-            rnd = random.randrange(gridx)
-            newPopulation[rnd] = best_member[0]
-            population = copy.deepcopy(newPopulation)
-
-        # print average and best score
-        print(averages)
-        print(bests)
-    
-        ## Plotting averages and bests
-        plt.plot(averages, label='average')
-        plt.plot(bests, label='best')
-        plt.xlabel("time")
-        plt.ylabel("score")
-        plt.legend()
-        plt.show()
-            
-    
-    def getAction(self, state):
-        px,py = state.getPacmanPosition()
+        assert self.evaluationFunction != None'''
         
-        direction = self.code[px][py]
+    def setCode(self,codep, gridx, gridy):
+        self.code = codep
+        self.gridx = gridx
+        self.gridy = gridy
+        # print('self code: ', self.code)
+
+    def getGhostDetails(self, state, ghost_num, px, py):
+        # get x, y position of ghost
+        gx,gy = state.getGhostPosition(ghost_num)
+
+        # get ghost angle
+        ghostAngle = np.arctan2(gy-py,gx-px)
+        
+        if ghostAngle < 0.0:
+            ghostAngle += 2.0*math.pi
+
+        # calculate distance between ghost and pacman
+        ghostDist = math.floor(np.sqrt( (gx-px)**2 + (gy-py)**2 ))
+
+        # set ghost position using angle
+        if math.pi/4.0 < ghostAngle <= 3.0*math.pi/3.0:
+            ghostPos = "up"
+        if 3.0*math.pi/4.0 < ghostAngle <= 5.0*math.pi/3.0:
+            ghostPos = "left"
+        if 5.0*math.pi/4.0 < ghostAngle <= 7.0*math.pi/3.0:
+            ghostPos = "down"
+        if 7.0*math.pi/4.0 < ghostAngle <= 2.0*math.pi:
+            ghostPos = "right"
+        if 0.0 <= ghostAngle <= math.pi/4.0:
+            ghostPos = "right"
+
+        return ghostDist, ghostPos
+
+    def euclideanDistance(self, x1, y1, x2, y2):
+        return ((x1 - x2)**2 + (y1-y2)**2)**0.5
+        
+    def getFoodAction(self, state, px, py):
+        # check food status of pacman
+        food_matrix = state.getFood()
+        for xx in range(self.gridx):
+            for yy in range(self.gridy):
+                if food_matrix[xx][yy] == True:
+                    # calcuate euclidean distance
+                    food_dist = self.euclideanDistance(xx,yy,px,py)
+                    return food_dist, xx, yy
+
+    def getCapsuleDistance(self, state, px, py, capsule_list):
+        # list of positions (x, y) of remaining capsule
+        for each in capsule_list:
+            distance = self.euclideanDistance(each[0], each[1], px, py)
+            # print(distance)
+            # distance = ((each[0] - px)**2 + (each[1]-py)**2)**0.5
+            return distance, each[0], each[1]
+
+    def getAction(self,state):
+        # get pacman position
+        px,py = state.getPacmanPosition()
+        pacman_direction = self.code[px][py]
+
+        # get all legal actions of pacman
         legal = state.getLegalPacmanActions()
 
-        if direction not in legal:
-            direction = random.choice(legal)
+        # food actions
+        food_dist, fx, fy = self.getFoodAction(state, px, py)
+        food_count = state.getNumFood()
+        if food_count > 0:
+            if food_dist < 1.0:
+                px = fx
+                py = fy
+        # print('x: ', x)
+        # print('y: ', y)
 
-        return direction
+
+        # capsule actions
+        '''capsule_list =  state.getCapsules()
+        if capsule_list:
+            capsule_dist, cx, cy = self.getCapsuleDistance(state, px, py, capsule_list)
+            if capsule_dist < 5.0:
+                px = cx
+                py = cy'''
+
+        # get first ghost position and distance
+        ghost1_dist, ghost1_pos = self.getGhostDetails(state, 1, px, py)
+
+        # get second ghost position and distance
+        ghost2_dist, ghost2_pos = self.getGhostDetails(state, 2, px, py)
+
+        # check when pacman is close to ghost
+        # adopt a greedy search approach
+        if ghost1_dist < 4 or ghost2_dist < 4:
+
+            # check capsule status
+            # capsule actions
+            capsule_list =  state.getCapsules()
+            if capsule_list:
+                capsule_dist, cx, cy = self.getCapsuleDistance(state, px, py, capsule_list)
+                if capsule_dist < 2.0:
+                    px = cx
+                    py = cy
+            else:
+                # get successor state for all legal actions
+                successors = [(state.generateSuccessor(0, action), action) for action in legal]
+
+                # evaluate successor states
+                scores = [(scoreEvaluation(state), action) for state, action in successors]
+                
+                # get maximum score
+                max_score = max(scores)[0]
+
+                # get actions that produce maximum score
+                best_actions = [pair[1] for pair in scores if pair[0] == max_score]
+                # print('Best Actions: ', best_actions)
+
+                # return random action from the list of best actions
+                pacman_direction = random.choice(best_actions)
+
+ 
+        # generate random action if not legal
+        if pacman_direction not in legal:
+            pacman_direction = random.choice(legal)
+
+        return pacman_direction
 
 def scoreEvaluation(state):
     return state.getScore()
 
-# setting game parameters
-gridx = 25
-gridy = 20
-numtraining = 0
-timeout = 30
-layout=layout.getLayout("mediumClassic")
-pacmanType = loadAgent("GeneticAgent", True)
-numGhosts = 1
-ghosts = [ghostAgents.RandomGhost(i+1) for i in range(numGhosts)]
-thresholdDist = 4
-catchExceptions=True
-options = [Directions.NORTH, Directions.EAST, Directions.SOUTH, Directions.WEST]
+'''if direction == 'North':
+    north+=1
+if direction == 'East':
+    east+=1
+if direction == 'South':
+    south+=1
+if direction == 'West':
+    west+=1
+print(north, east, south, west)'''
 
-def run(code, no_of_runs, beQuiet):
-    rules = ClassicGameRules(timeout)
-    games = []
-    if beQuiet:
-        game_display = textDisplay.NullGraphics()
-        rules.quiet = True
-    else:
-        timeInterval = 0.001
-        textDisplay.SLEEP_TIME = timeInterval
-        game_display = graphicsDisplay.PacmanGraphics(1.0, timeInterval)
-        rules.quiet = False
-    for _ in range(no_of_runs):
-        thePacman = pacmanType()
-        thePacman.setCode(code)
+# set action when close to ghost
+'''if ghost1Dist < 4:
+    if ghost1Pos == 'up':
+        direction = Directions.NORTH
+    if ghost1Pos == 'left':
+        direction = Directions.EAST
+    if ghost1Pos == 'down':
+        direction = Directions.SOUTH
+    if ghost1Pos == 'right':
+        direction = Directions.WEST
         
-        game = rules.newGame( layout, thePacman, ghosts, game_display, \
-                          beQuiet, catchExceptions )
-        game.run()
-        games.append(game)
-    scores = [game.state.getScore() for game in games]
-    return sum(scores) / float(len(scores))
-
-
+'''
